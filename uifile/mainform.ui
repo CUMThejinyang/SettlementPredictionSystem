@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>885</width>
-    <height>600</height>
+    <width>954</width>
+    <height>881</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,8 +19,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>885</width>
-     <height>23</height>
+     <width>954</width>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
@@ -41,7 +41,7 @@
      <addaction name="action_outputKnotheData"/>
      <addaction name="action_outputGrayModelData"/>
     </widget>
-    <addaction name="action"/>
+    <addaction name="action_newTable"/>
     <addaction name="menu_3"/>
     <addaction name="menu_5"/>
     <addaction name="separator"/>
@@ -79,8 +79,8 @@
   <widget class="QDockWidget" name="dockWidget">
    <property name="minimumSize">
     <size>
-     <width>80</width>
-     <height>95</height>
+     <width>95</width>
+     <height>115</height>
     </size>
    </property>
    <property name="windowTitle">
@@ -206,7 +206,7 @@
     </layout>
    </widget>
   </widget>
-  <action name="action">
+  <action name="action_newTable">
    <property name="text">
     <string>新建表格</string>
    </property>

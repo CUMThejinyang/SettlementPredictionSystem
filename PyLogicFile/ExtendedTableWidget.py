@@ -19,6 +19,7 @@ class propertyDialog(QDialog, Ui_Dialog):
         self.tableWidget.verticalHeader().hide()
         self.pushButtonOk.clicked.connect(self.confirm)
         self.pushButton_reset.clicked.connect(self.reset)
+        self.tableWidget.setRowCount(self.parent().columnCount())
 
     def confirm(self):
         try:
@@ -35,13 +36,16 @@ class propertyDialog(QDialog, Ui_Dialog):
 
     def reset(self):
         try:
-            self.tableWidget.setRowCount(self.parent().columnCount())
+            self.tableWidget.clear()
+            self.tableWidget.setHorizontalHeaderLabels(['列号', '列标题'])
             for i in range(self.parent().columnCount()):
                 self.tableWidget.setItem(i, 0, QTableWidgetItem(str(i + 1)))
+                item = self.tableWidget.item(i, 0)
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
                 if self.parent().horizontalHeaderItem(i) is not None:
                     self.tableWidget.setItem(i, 1, QTableWidgetItem(self.parent().horizontalHeaderItem(i).text()))
                 else:
-                    self.tableWidget.setItem(i, 1, QTableWidgetItem(""))
+                    self.tableWidget.setItem(i, 1, QTableWidgetItem(str(i + 1)))
             self.spinBox_colnum.setValue(self.parent().columnCount())
             self.spinBox_rownum.setValue(self.parent().rowCount())
         except Exception as e:
@@ -86,13 +90,12 @@ class RowDialog(QDialog, Ui_rowDialog):
             self.checknum = 2
 
 
-
 class ExtendedTableWidget(QTableWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.popmenu = QMenu(self)
-
+        self.cnt = 0
         self.action_copy = QAction("复制", self.popmenu)
         self.action_copy.triggered.connect(self.copy)
 
@@ -120,6 +123,9 @@ class ExtendedTableWidget(QTableWidget):
         self.action_insertcol = QAction("插入列", self.popmenu)
         self.action_insertcol.triggered.connect(self.InsertCol)
 
+        self.action_modifyColumnTitle = QAction("修改列标题", self.popmenu)
+        self.action_modifyColumnTitle.triggered.connect(self.modifyColumnTitle)
+
         self.action_propertySet = QAction("表格属性设置", self.popmenu)
         self.action_propertySet.triggered.connect(self.setTableProperty)
 
@@ -138,23 +144,44 @@ class ExtendedTableWidget(QTableWidget):
 
             self.action_removerow,
             self.action_removecol,
+            self.action_modifyColumnTitle,
             self.action_propertySet
 
         ]
         self.popmenu.addActions(lst)
         self.customContextMenuRequested.connect(self.showPopMenu)
 
+    def modifyColumnTitle(self):
+        try:
+            selection = self.selectedRanges()[0]
+            labels = [self.horizontalHeaderItem(i).text() for i in range(self.columnCount())]
+            ret, ok = QInputDialog.getText(self, "列标题设置", "请输入列标题", text="列标题{}".format(self.cnt))
+            if ok:
+                labels[selection.leftColumn()] = ret
+                self.cnt += 1
+                self.setHorizontalHeaderLabels(labels)
+        except Exception as e:
+            print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
+
+
+
     def setTableProperty(self):
-        self.propertyWin.tableWidget.setRowCount(self.columnCount())
-        for i in range(self.columnCount()):
-            self.propertyWin.tableWidget.setItem(i, 0, QTableWidgetItem(str(i + 1)))
-            if self.horizontalHeaderItem(i) is not None:
-                self.propertyWin.tableWidget.setItem(i, 1, QTableWidgetItem(self.horizontalHeaderItem(i).text()))
-            else:
-                self.propertyWin.tableWidget.setItem(i, 1, QTableWidgetItem(""))
-        self.propertyWin.spinBox_colnum.setValue(self.columnCount())
-        self.propertyWin.spinBox_rownum.setValue(self.rowCount())
-        self.propertyWin.show()
+        try:
+            self.propertyWin.tableWidget.setRowCount(self.columnCount())
+            for i in range(self.columnCount()):
+                self.propertyWin.tableWidget.setItem(i, 0, QTableWidgetItem(str(i + 1)))
+                item = self.propertyWin.tableWidget.item(i, 0)
+                item.setFlags(item.flags() & ~Qt.ItemIsEditable)
+                if self.horizontalHeaderItem(i) is not None:
+                    self.propertyWin.tableWidget.setItem(i, 1, QTableWidgetItem(self.horizontalHeaderItem(i).text()))
+                else:
+                    self.propertyWin.tableWidget.setItem(i, 1, QTableWidgetItem(str(i + 1)))
+
+            self.propertyWin.spinBox_colnum.setValue(self.columnCount())
+            self.propertyWin.spinBox_rownum.setValue(self.rowCount())
+            self.propertyWin.show()
+        except Exception as e:
+            print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
 
     def InsertRow(self):
         try:
@@ -175,7 +202,6 @@ class ExtendedTableWidget(QTableWidget):
                         for i in range(num):
                             self.insertRow(bottom_row + 1)
         except Exception as e:
-            self.insertRow(0)
             print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
 
     def InsertCol(self):
@@ -197,7 +223,7 @@ class ExtendedTableWidget(QTableWidget):
                         for i in range(num):
                             self.insertColumn(rightcol + 1)
         except Exception as e:
-            self.insertColumn(0)
+
             print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
 
     def removeSelectedRow(self):
