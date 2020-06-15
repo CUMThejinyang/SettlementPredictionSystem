@@ -23,6 +23,11 @@ class propertyDialog(QDialog, Ui_propertyDialog):
 
 
 
+
+
+
+
+
 class ColDialog(QDialog, Ui_coldialog):
 
     def __init__(self, parent=None):
