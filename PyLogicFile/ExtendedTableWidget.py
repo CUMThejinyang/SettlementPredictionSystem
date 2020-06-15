@@ -3,29 +3,49 @@
 # @author: hejinyang
 # @File  : ExtendedTableWidget.py
 
-from PyQt5.QtWidgets import QTableWidget, QMenu, QAction
 from PyQt5.Qt import *
-from typing import *
+
 from PyUiFile.rowdialog import Ui_rowDialog
 from PyUiFile.coldialog import Ui_coldialog
-from PyUiFile.propertyDialog import Ui_propertyDialog
+from PyUiFile.propertywin import Ui_Dialog
+from typing import *
 
 
-
-class propertyDialog(QDialog, Ui_propertyDialog):
+class propertyDialog(QDialog, Ui_Dialog):
 
     def __init__(self, parent=None):
         super(propertyDialog, self).__init__(parent)
         self.setupUi(self)
+        self.tableWidget.verticalHeader().hide()
+        self.pushButtonOk.clicked.connect(self.confirm)
+        self.pushButton_reset.clicked.connect(self.reset)
 
+    def confirm(self):
+        try:
+            lst = []
+            for i in range(self.tableWidget.rowCount()):
+                lst.append(self.tableWidget.item(i, 1).text())
+            self.parent().setHorizontalHeaderLabels(lst)
+            col_num = self.spinBox_colnum.value()
+            row_num = self.spinBox_rownum.value()
+            self.parent().setColumnCount(col_num)
+            self.parent().setRowCount(row_num)
+        except Exception as e:
+            print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
 
-
-
-
-
-
-
-
+    def reset(self):
+        try:
+            self.tableWidget.setRowCount(self.parent().columnCount())
+            for i in range(self.parent().columnCount()):
+                self.tableWidget.setItem(i, 0, QTableWidgetItem(str(i + 1)))
+                if self.parent().horizontalHeaderItem(i) is not None:
+                    self.tableWidget.setItem(i, 1, QTableWidgetItem(self.parent().horizontalHeaderItem(i).text()))
+                else:
+                    self.tableWidget.setItem(i, 1, QTableWidgetItem(""))
+            self.spinBox_colnum.setValue(self.parent().columnCount())
+            self.spinBox_rownum.setValue(self.parent().rowCount())
+        except Exception as e:
+            print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
 
 
 class ColDialog(QDialog, Ui_coldialog):
@@ -64,6 +84,7 @@ class RowDialog(QDialog, Ui_rowDialog):
     def changeState2(self, val):
         if val:
             self.checknum = 2
+
 
 
 class ExtendedTableWidget(QTableWidget):
@@ -105,9 +126,6 @@ class ExtendedTableWidget(QTableWidget):
         self.propertyWin = propertyDialog(self)
         self.propertyWin.hide()
 
-
-
-
         lst = [
             self.action_copy,
             self.action_shear,
@@ -126,11 +144,17 @@ class ExtendedTableWidget(QTableWidget):
         self.popmenu.addActions(lst)
         self.customContextMenuRequested.connect(self.showPopMenu)
 
-
     def setTableProperty(self):
+        self.propertyWin.tableWidget.setRowCount(self.columnCount())
+        for i in range(self.columnCount()):
+            self.propertyWin.tableWidget.setItem(i, 0, QTableWidgetItem(str(i + 1)))
+            if self.horizontalHeaderItem(i) is not None:
+                self.propertyWin.tableWidget.setItem(i, 1, QTableWidgetItem(self.horizontalHeaderItem(i).text()))
+            else:
+                self.propertyWin.tableWidget.setItem(i, 1, QTableWidgetItem(""))
+        self.propertyWin.spinBox_colnum.setValue(self.columnCount())
+        self.propertyWin.spinBox_rownum.setValue(self.rowCount())
         self.propertyWin.show()
-
-
 
     def InsertRow(self):
         try:
@@ -175,8 +199,6 @@ class ExtendedTableWidget(QTableWidget):
         except Exception as e:
             self.insertColumn(0)
             print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
-
-
 
     def removeSelectedRow(self):
         try:

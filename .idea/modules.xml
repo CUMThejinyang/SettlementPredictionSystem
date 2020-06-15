@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/SettlementPredictionSystem.iml" filepath="$PROJECT_DIR$/.idea/SettlementPredictionSystem.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../pro01/.idea/pro01.iml" filepath="$PROJECT_DIR$/../pro01/.idea/pro01.iml" />
     </modules>
   </component>
 </project>
