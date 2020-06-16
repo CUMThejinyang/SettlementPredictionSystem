@@ -2,7 +2,15 @@ from PyQt5.Qt import *
 from PyUiFile.mainform import Ui_MainWindow
 import numpy as np
 import pandas as pd
-from pyqtgraph.widgets import PlotWidget
+from pyqtgraph.widgets.PlotWidget import PlotWidget
+import pyqtgraph as pg
+import cgitb
+from pprint import pprint
+from random import randint
+
+cgitb.enable(format="text")
+
+pg.setConfigOptions(antialias=True)
 
 
 class MainWin(QMainWindow, Ui_MainWindow):
@@ -13,23 +21,87 @@ class MainWin(QMainWindow, Ui_MainWindow):
         centerWidget = self.takeCentralWidget()
         del centerWidget
         self.setDockNestingEnabled(True)
-        self.dockWidget_4.setMaximumWidth(150)
-        self.splitDockWidget(self.dockWidget, self.dockWidget_4, Qt.Horizontal)
+        self.checkBox_reverseAxis.setChecked(True)
         self.df_oriData: pd.DataFrame = None
         self.df_processData: pd.DataFrame = None
         self.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.propertyWin.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.radioButtonOriData.setChecked(True)
-
+        self.tabifyDockWidget(self.dockWidget, self.dockWidget_2)
 
         self.action_exit.triggered.connect(self.deleteLater)
         self.action_newTable.triggered.connect(self.newTable)
         self.action_datafromExcel.triggered.connect(self.inputData)
         self.radioButton_ProcessData.toggled[bool].connect(self.changeData1)
         self.radioButtonOriData.toggled[bool].connect(self.changeData2)
+        self.pushButton_draw.clicked.connect(self.drawOriginData)
+        self.pushButton_reset.clicked.connect(self.ori_reset)
+        self.pushButton_clearPicture.clicked.connect(self.ori_plot_win.plotItem.clear)
+
+    def ori_reset(self):
+        self.lineEdit_horizontalAxisTitle.clear()
+        self.lineEdit_verticalAxisTitle.clear()
+        self.lineEdit_verticalAxisUnits.clear()
+        self.lineEdit_horizontalAxisUnits.clear()
+        self.checkBox_reverseAxis.setChecked(True)
 
 
-    def changeData1(self, val:bool):
+    def drawOriginData(self):
+
+        selections = self.tableWidget.selectedRanges()
+        self.ori_plot_win.addLegend(offset=(50, 50))
+        # self.ori_plot_win.plotItem.showGrid(x=True, y=True, alpha = 0.4)  # 设置绘图部件显示网格线
+        self.ori_plot_win.plotItem.clear()
+        labels = [self.tableWidget.horizontalHeaderItem(i).text() for i in
+                  range(self.tableWidget.columnCount())]
+        data = []
+        for selection in selections:
+            toprow = selection.topRow()
+            bottomrow = selection.bottomRow()
+            leftcolumn = selection.leftColumn()
+            rightcolumn = selection.rightColumn()
+            for col in range(leftcolumn, rightcolumn + 1, 1):
+                lst = []
+                for row in range(toprow, bottomrow + 1, 1):
+                    lst.append(float(self.tableWidget.item(row, col).text()))
+                data.append((labels[col], lst))
+        # 设置坐标轴信息
+        xtitle = self.lineEdit_horizontalAxisTitle.text()
+        xunits = self.lineEdit_horizontalAxisUnits.text()
+        ytitle = self.lineEdit_verticalAxisTitle.text()
+        yunits = self.lineEdit_verticalAxisUnits.text()
+        if xtitle == "":
+            x = ""
+        else:
+            if xunits == "":
+                x = xtitle
+            else:
+                x = "{}({})".format(xtitle, xunits)
+
+        if ytitle == "":
+            y = ""
+        else:
+            if yunits == "":
+                y = ytitle
+            else:
+                y = "{}({})".format(ytitle, yunits)
+        if self.checkBox_reverseAxis.isChecked():
+            self.ori_plot_win.setLabel('left', y)
+            self.ori_plot_win.setLabel('bottom', x)
+            # 绘图
+            for index in range(1, len(data)):
+                self.ori_plot_win.plotItem.plot(y=data[0][1], x=data[index][1], name=data[index][0],
+                                                pen=(randint(0, 255), randint(0, 255), randint(0, 255)))
+
+        else:
+            self.ori_plot_win.setLabel('left', y)
+            self.ori_plot_win.setLabel('bottom', x)
+            # 绘图
+            for index in range(1, len(data)):
+                self.ori_plot_win.plotItem.plot(x=data[0][1], y=data[index][1], name=data[index][0],
+                                                pen=(randint(0, 255), randint(0, 255), randint(0, 255)))
+
+    def changeData1(self, val: bool):
         try:
             if val:
                 self.tableWidget.clear()
@@ -48,8 +120,7 @@ class MainWin(QMainWindow, Ui_MainWindow):
         except Exception as e:
             print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
 
-
-    def changeData2(self, val:bool):
+    def changeData2(self, val: bool):
         try:
             if val:
                 self.tableWidget.clear()
@@ -68,9 +139,10 @@ class MainWin(QMainWindow, Ui_MainWindow):
             print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
 
     def inputData(self):
-        filename, ok = QFileDialog.getOpenFileName(self, "数据导入", ".", "Excel Files(*.xlsx *.xls)")
+        # filename, ok = QFileDialog.getOpenFileName(self, "数据导入", ".", "Excel Files(*.xlsx *.xls)")
+        filename = r"C:\Users\hejinyang\Desktop\V1.xlsx"
+        ok = True
         try:
-
             if ok:
                 df = pd.read_excel(filename)
                 col_num = len(df.columns)
@@ -86,7 +158,7 @@ class MainWin(QMainWindow, Ui_MainWindow):
                 data[df.columns[1]] = df[df.columns[1]]
                 for i in range(2, col_num):
                     series = df[df.columns[i]] - df[df.columns[1]]
-                    data[df.columns[i]] = list(map(lambda x:round(x, 5), series.tolist()))
+                    data[df.columns[i]] = list(map(lambda x: round(x, 5), series.tolist()))
                 self.df_processData = pd.DataFrame(data)
                 if self.radioButtonOriData.isChecked():
                     for i in range(row_num):
@@ -97,8 +169,6 @@ class MainWin(QMainWindow, Ui_MainWindow):
                     for i in range(row_num):
                         for j in range(col_num):
                             self.tableWidget.setItem(i, j, QTableWidgetItem(str(new_df.iloc[i, j])))
-
-
         except Exception as e:
             print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
 
