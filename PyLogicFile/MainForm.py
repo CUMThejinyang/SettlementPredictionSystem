@@ -26,8 +26,12 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.df_processData: pd.DataFrame = None
         self.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.propertyWin.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableWidget_SettlementDisplay.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.dockWidget_4.setFixedWidth(386)
         self.radioButtonOriData.setChecked(True)
-        self.tabifyDockWidget(self.dockWidget, self.dockWidget_2)
+        self.action_datafromExcel.setIcon(QIcon("Images/导入数据.png"))
+        self.action_outputGrayModelData.setIcon(QIcon("Images/导出数据.png"))
+        self.action_newTable.setIcon(QIcon("Images/新建表格.png"))
 
         self.action_exit.triggered.connect(self.deleteLater)
         self.action_newTable.triggered.connect(self.newTable)
@@ -37,6 +41,29 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.pushButton_draw.clicked.connect(self.drawOriginData)
         self.pushButton_reset.clicked.connect(self.ori_reset)
         self.pushButton_clearPicture.clicked.connect(self.ori_plot_win.plotItem.clear)
+        self.toolBar = QToolBar(self)
+        self.addToolBar(Qt.TopToolBarArea, self.toolBar)
+
+        self.toolBar.addAction(self.action_newTable)
+        self.toolBar.addAction(self.action_datafromExcel)
+        self.toolBar.addAction(self.action_outputGrayModelData)
+
+        self.customLayout()
+
+    def customLayout(self):
+        self.addDockWidget(Qt.RightDockWidgetArea, self.dockWidget_4)
+        self.setLayoutDirection(Qt.LeftToRight)
+        self.dockWidget_2.setAllowedAreas(Qt.LeftDockWidgetArea)
+        self.dockWidget.setAllowedAreas(Qt.LeftDockWidgetArea)
+        self.dockWidget_3.setAllowedAreas(Qt.LeftDockWidgetArea)
+        self.tabifyDockWidget(self.dockWidget, self.dockWidget_2)
+        self.tabifyDockWidget(self.dockWidget, self.dockWidget_3)
+        # self.setTabPosition(Qt.LeftDockWidgetArea, QTabWidget.West)
+        self.dockWidget.raise_()
+        self.splitter_2.setStretchFactor(0, 3.5)
+        self.splitter_2.setStretchFactor(1, 6.5)
+        self.splitter_3.setStretchFactor(0, 7)
+        self.splitter_3.setStretchFactor(1, 3)
 
     def ori_reset(self):
         self.lineEdit_horizontalAxisTitle.clear()
@@ -173,5 +200,6 @@ class MainWin(QMainWindow, Ui_MainWindow):
             print(e, e.__traceback__.tb_frame.f_globals["__file__"], e.__traceback__.tb_lineno, sep='\t\t\t')
 
     def newTable(self):
-        self.tableWidget.setColumnCount(50)
+        self.tableWidget.clear()
+        self.tableWidget.setColumnCount(20)
         self.tableWidget.setRowCount(100)

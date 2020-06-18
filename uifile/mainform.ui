@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1268</width>
-    <height>962</height>
+    <height>2100</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -72,9 +72,25 @@
     <addaction name="separator"/>
     <addaction name="action_20"/>
    </widget>
+   <widget class="QMenu" name="menu_6">
+    <property name="title">
+     <string>预测</string>
+    </property>
+    <widget class="QMenu" name="menu_7">
+     <property name="title">
+      <string>时间函数</string>
+     </property>
+     <addaction name="action_TheoryCalculationPrediction"/>
+     <addaction name="action_CustomParameterFit"/>
+    </widget>
+    <addaction name="action_RunGrayTheory"/>
+    <addaction name="menu_7"/>
+    <addaction name="action_DynamicFit"/>
+   </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
    <addaction name="menu_4"/>
+   <addaction name="menu_6"/>
   </widget>
   <widget class="QDockWidget" name="dockWidget">
    <property name="minimumSize">
@@ -82,6 +98,12 @@
      <width>629</width>
      <height>424</height>
     </size>
+   </property>
+   <property name="features">
+    <set>QDockWidget::DockWidgetClosable|QDockWidget::DockWidgetMovable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea</set>
    </property>
    <property name="windowTitle">
     <string>应变数据</string>
@@ -154,6 +176,12 @@
    </widget>
   </widget>
   <widget class="QDockWidget" name="dockWidget_2">
+   <property name="features">
+    <set>QDockWidget::DockWidgetMovable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+   </property>
    <property name="windowTitle">
     <string>应变绘图</string>
    </property>
@@ -298,6 +326,555 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="dockWidget_3">
+   <property name="features">
+    <set>QDockWidget::DockWidgetMovable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>数据预测</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3">
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="0">
+      <widget class="QSplitter" name="splitter_3">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <widget class="QSplitter" name="splitter_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="title">
+          <string>数据</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_11">
+          <item row="0" column="0">
+           <widget class="ExtendedTableWidget" name="tableWidget_SettlementDisplay"/>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="title">
+          <string>绘图区</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_12">
+          <item row="0" column="0">
+           <widget class="PlotWidget" name="widget_2" native="true"/>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+       <widget class="QGroupBox" name="groupBox_5">
+        <property name="title">
+         <string>程序输出</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_13">
+         <item row="0" column="0">
+          <widget class="QTextBrowser" name="textBrowser"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="dockWidget_4">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>386</width>
+     <height>135</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>386</width>
+     <height>524287</height>
+    </size>
+   </property>
+   <property name="features">
+    <set>QDockWidget::DockWidgetMovable</set>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>预测设置</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_7">
+    <layout class="QGridLayout" name="gridLayout_17">
+     <item row="0" column="0">
+      <widget class="QScrollArea" name="scrollArea">
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="scrollAreaWidgetContents">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>-10</y>
+          <width>373</width>
+          <height>972</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_26">
+         <item row="0" column="0">
+          <layout class="QGridLayout" name="gridLayout_25">
+           <item row="0" column="0">
+            <widget class="QGroupBox" name="groupBox_6">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="title">
+              <string>灰色理论</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_15">
+              <item row="0" column="0">
+               <layout class="QGridLayout" name="gridLayout_16">
+                <item row="3" column="0">
+                 <widget class="QCheckBox" name="checkBox_MetabolismModel">
+                  <property name="text">
+                   <string>新陈代谢模型</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0">
+                 <widget class="QCheckBox" name="checkBox_SupplementModel">
+                  <property name="text">
+                   <string>灰数递补模型</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0">
+                 <layout class="QFormLayout" name="formLayout">
+                  <property name="sizeConstraint">
+                   <enum>QLayout::SetFixedSize</enum>
+                  </property>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="labelTrainCount">
+                    <property name="text">
+                     <string>训练集个数</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QSpinBox" name="SpinBoxTrainCount"/>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="LabelTestCount">
+                    <property name="text">
+                     <string>测试集个数            </string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QSpinBox" name="LineEditTestCount"/>
+                  </item>
+                 </layout>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QCheckBox" name="checkBox_CommonGrayModel">
+                  <property name="text">
+                   <string>普通GM(1,1)模型</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QGroupBox" name="groupBox_7">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="title">
+              <string>Knothe时间函数</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_14">
+              <item row="0" column="0">
+               <layout class="QGridLayout" name="gridLayout_18">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetDefaultConstraint</enum>
+                </property>
+                <item row="0" column="2">
+                 <widget class="QLineEdit" name="lineEdit_FinalSettlement"/>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QLineEdit" name="lineEdit_DigSpeed"/>
+                </item>
+                <item row="2" column="0" colspan="2">
+                 <widget class="QLabel" name="label_8">
+                  <property name="text">
+                   <string>煤层平均采深</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2">
+                 <widget class="QLineEdit" name="lineEdit_AverageDigDepth"/>
+                </item>
+                <item row="3" column="2">
+                 <widget class="QLineEdit" name="lineEdit_OffsetDistance"/>
+                </item>
+                <item row="4" column="2">
+                 <widget class="QLineEdit" name="lineEdit_MainInfluentialAngel"/>
+                </item>
+                <item row="5" column="2">
+                 <widget class="QLineEdit" name="lineEdit_GroundMoveTotalTime"/>
+                </item>
+                <item row="6" column="2">
+                 <widget class="QLineEdit" name="lineEdit_CoalVerticalThickness"/>
+                </item>
+                <item row="7" column="2">
+                 <widget class="QLineEdit" name="lineEdit_CoalAngel"/>
+                </item>
+                <item row="9" column="2">
+                 <widget class="QLineEdit" name="lineEdit_GetDataTimeInterval">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="0" colspan="2">
+                 <widget class="QLabel" name="label_6">
+                  <property name="text">
+                   <string>最终沉降值W0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0" colspan="2">
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>煤层开采速度</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="0" colspan="2">
+                 <widget class="QLabel" name="label_9">
+                  <property name="text">
+                   <string>拐点偏移距</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="4" column="0" colspan="2">
+                 <widget class="QLabel" name="label_10">
+                  <property name="text">
+                   <string>主要影响角</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="5" column="0" colspan="2">
+                 <widget class="QLabel" name="label_11">
+                  <property name="text">
+                   <string>地表移动总时间</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="0" colspan="2">
+                 <widget class="QLabel" name="label_12">
+                  <property name="text">
+                   <string>煤层法向厚度</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="7" column="0" colspan="2">
+                 <widget class="QLabel" name="label_13">
+                  <property name="text">
+                   <string>煤层倾角</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="2">
+                 <widget class="QLineEdit" name="lineEdit_DownCoefficient">
+                  <property name="text">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+                <item row="8" column="0" colspan="2">
+                 <widget class="QLabel" name="label_14">
+                  <property name="text">
+                   <string>下沉系数</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="9" column="0" colspan="2">
+                 <widget class="QLabel" name="label_15">
+                  <property name="text">
+                   <string>数据采集时间间隔       </string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QGroupBox" name="groupBox_8">
+             <property name="title">
+              <string>自定义Knothe时间函数参数</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_20">
+              <item row="0" column="0">
+               <layout class="QGridLayout" name="gridLayout_19">
+                <item row="2" column="0" colspan="2">
+                 <widget class="QLabel" name="label_18">
+                  <property name="text">
+                   <string>最大下沉速度出现的时间τ</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2">
+                 <widget class="QLineEdit" name="lineEdit_3"/>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QLineEdit" name="lineEdit_2"/>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLineEdit" name="lineEdit"/>
+                </item>
+                <item row="0" column="0" colspan="2">
+                 <widget class="QLabel" name="label_16">
+                  <property name="text">
+                   <string>最终沉降值W0</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0" colspan="2">
+                 <widget class="QLabel" name="label_17">
+                  <property name="text">
+                   <string>时间系数c</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QGroupBox" name="groupBox_9">
+             <property name="title">
+              <string>Knothe时间函数动态拟合求参</string>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_24">
+              <item row="0" column="0">
+               <layout class="QGridLayout" name="gridLayout_23">
+                <item row="0" column="0">
+                 <layout class="QGridLayout" name="gridLayout_21">
+                  <item row="7" column="1">
+                   <widget class="QDoubleSpinBox" name="doubleSpinBox_taoEnd"/>
+                  </item>
+                  <item row="8" column="0">
+                   <widget class="QLabel" name="label_27">
+                    <property name="text">
+                     <string>τ变化步长</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="8" column="1">
+                   <widget class="QDoubleSpinBox" name="doubleSpinBox_taoChangeStep"/>
+                  </item>
+                  <item row="5" column="1">
+                   <widget class="QDoubleSpinBox" name="doubleSpinBox_CChangeStep"/>
+                  </item>
+                  <item row="6" column="0">
+                   <widget class="QLabel" name="label_25">
+                    <property name="text">
+                     <string>τ起始值</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="0">
+                   <widget class="QLabel" name="label_22">
+                    <property name="text">
+                     <string>c起始值</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="3" column="1">
+                   <widget class="QDoubleSpinBox" name="doubleSpinBox_CBegin"/>
+                  </item>
+                  <item row="4" column="0">
+                   <widget class="QLabel" name="label_23">
+                    <property name="text">
+                     <string>c结束值</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="4" column="1">
+                   <widget class="QDoubleSpinBox" name="doubleSpinBox_CEnd"/>
+                  </item>
+                  <item row="5" column="0">
+                   <widget class="QLabel" name="label_24">
+                    <property name="text">
+                     <string>c变化步长</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="7" column="0">
+                   <widget class="QLabel" name="label_26">
+                    <property name="text">
+                     <string>τ结束值</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="6" column="1">
+                   <widget class="QDoubleSpinBox" name="doubleSpinBox_taoBegin"/>
+                  </item>
+                  <item row="0" column="0">
+                   <widget class="QLabel" name="label_19">
+                    <property name="text">
+                     <string>W0起始值</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QDoubleSpinBox" name="doubleSpinBox_W0Begin"/>
+                  </item>
+                  <item row="1" column="0">
+                   <widget class="QLabel" name="label_20">
+                    <property name="text">
+                     <string>W0结束值</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="1" column="1">
+                   <widget class="QDoubleSpinBox" name="doubleSpinBox_W0End"/>
+                  </item>
+                  <item row="2" column="0">
+                   <widget class="QLabel" name="label_21">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="text">
+                     <string>W0变化步长             </string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="2" column="1">
+                   <widget class="QDoubleSpinBox" name="doubleSpinBox_W0ChangeStep"/>
+                  </item>
+                 </layout>
+                </item>
+                <item row="1" column="0">
+                 <layout class="QGridLayout" name="gridLayout_22">
+                  <item row="0" column="0">
+                   <spacer name="horizontalSpacer_4">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item row="0" column="1">
+                   <widget class="QPushButton" name="pushButton">
+                    <property name="text">
+                     <string>开始</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="2">
+                   <spacer name="horizontalSpacer">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item row="0" column="3">
+                   <widget class="QPushButton" name="pushButton_2">
+                    <property name="text">
+                     <string>暂停</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="4">
+                   <spacer name="horizontalSpacer_2">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                  <item row="0" column="5">
+                   <widget class="QPushButton" name="pushButton_3">
+                    <property name="text">
+                     <string>停止</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item row="0" column="6">
+                   <spacer name="horizontalSpacer_3">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
+                    </property>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
+                    </property>
+                   </spacer>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
   <action name="action_newTable">
    <property name="text">
     <string>新建表格</string>
@@ -405,6 +982,46 @@
   <action name="action_addCol">
    <property name="text">
     <string>添加列</string>
+   </property>
+  </action>
+  <action name="action_RunGrayTheory">
+   <property name="text">
+    <string>灰色理论</string>
+   </property>
+  </action>
+  <action name="action_3">
+   <property name="text">
+    <string/>
+   </property>
+  </action>
+  <action name="action_4">
+   <property name="text">
+    <string/>
+   </property>
+  </action>
+  <action name="action_5">
+   <property name="text">
+    <string>分段时间函数</string>
+   </property>
+  </action>
+  <action name="action_8">
+   <property name="text">
+    <string>三参数时间函数</string>
+   </property>
+  </action>
+  <action name="action_DynamicFit">
+   <property name="text">
+    <string>动态拟合</string>
+   </property>
+  </action>
+  <action name="action_TheoryCalculationPrediction">
+   <property name="text">
+    <string>理论计算预测</string>
+   </property>
+  </action>
+  <action name="action_CustomParameterFit">
+   <property name="text">
+    <string>自定义参数预测</string>
    </property>
   </action>
  </widget>
