@@ -4,12 +4,13 @@
 # @File  : ExtendedTableWidget.py
 
 from PyQt5.Qt import *
-
 from PyUiFile.rowdialog import Ui_rowDialog
 from PyUiFile.coldialog import Ui_coldialog
 from PyUiFile.propertywin import Ui_Dialog
 from typing import *
 
+import cgitb
+cgitb.enable(format="text")
 
 class propertyDialog(QDialog, Ui_Dialog):
 
@@ -45,7 +46,7 @@ class propertyDialog(QDialog, Ui_Dialog):
                 if self.parent().horizontalHeaderItem(i) is not None:
                     self.tableWidget.setItem(i, 1, QTableWidgetItem(self.parent().horizontalHeaderItem(i).text()))
                 else:
-                    self.tableWidget.setItem(i, 1, QTableWidgetItem(str(i + 1)))
+                    self.tableWidget.setItem(i, 1, QTableWidgetItem("untitled"+str(i + 1)))
             self.spinBox_colnum.setValue(self.parent().columnCount())
             self.spinBox_rownum.setValue(self.parent().rowCount())
         except Exception as e:
@@ -92,12 +93,17 @@ class RowDialog(QDialog, Ui_rowDialog):
 
 class ExtendedTableWidget(QTableWidget):
 
+    Signal_CalculateSettlement = pyqtSignal()
     def __init__(self, parent=None):
         super().__init__(parent)
         self.popmenu = QMenu(self)
         self.cnt = 0
+
         self.action_copy = QAction("复制", self.popmenu)
         self.action_copy.triggered.connect(self.copy)
+
+        self.action_CalculateSettlement = QAction("沉降值计算", self.popmenu)
+        self.action_CalculateSettlement.triggered.connect(self.emitSignal_CalculateSettlement)
 
         self.action_paste = QAction("粘贴", self.popmenu)
         self.action_paste.triggered.connect(self.paste)
@@ -132,6 +138,14 @@ class ExtendedTableWidget(QTableWidget):
         self.propertyWin = propertyDialog(self)
         self.propertyWin.hide()
 
+        self.action_drawFigure = QAction("绘图", self.popmenu)
+        self.action_drawFigure.triggered.connect(self.drawFigure)
+        self.popmenu.addAction(self.action_drawFigure)
+        self.popmenu.addAction(self.action_CalculateSettlement)
+
+
+        self.popmenu.addSeparator()
+
         lst = [
             self.action_copy,
             self.action_shear,
@@ -148,8 +162,24 @@ class ExtendedTableWidget(QTableWidget):
             self.action_propertySet
 
         ]
-        self.popmenu.addActions(lst)
+        self.popmenu.addActions(lst[:3])
+        self.popmenu.addSeparator()
+        self.popmenu.addActions(lst[3:7])
+        self.popmenu.addSeparator()
+        self.popmenu.addActions(lst[7:])
         self.customContextMenuRequested.connect(self.showPopMenu)
+
+
+    def emitSignal_CalculateSettlement(self):
+        self.Signal_CalculateSettlement.emit()
+
+
+    def drawFigure(self):
+        mainWin = self.parent().parent().parent()
+        mainWin.dockWidget_2.raise_()
+        mainWin.drawOriginData()
+
+
 
     def modifyColumnTitle(self):
         try:
@@ -343,3 +373,7 @@ class ExtendedTableWidget(QTableWidget):
 
     def showPopMenu(self):
         self.popmenu.exec_(QCursor.pos())
+
+
+
+

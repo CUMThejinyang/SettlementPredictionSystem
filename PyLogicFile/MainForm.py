@@ -1,12 +1,10 @@
 from PyQt5.Qt import *
 from PyUiFile.mainform import Ui_MainWindow
-import numpy as np
 import pandas as pd
-from pyqtgraph.widgets.PlotWidget import PlotWidget
 import pyqtgraph as pg
-import cgitb
-from pprint import pprint
 from random import randint
+from numpy import trapz
+import cgitb
 
 cgitb.enable(format="text")
 
@@ -24,15 +22,41 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.checkBox_reverseAxis.setChecked(True)
         self.df_oriData: pd.DataFrame = None
         self.df_processData: pd.DataFrame = None
+
+        # 单独设置沉降值计算窗口
+        # self.tableWidget_SettlementDisplay.action_drawFigure.setVisible(False)
+        self.tableWidget_SettlementDisplay.action_CalculateSettlement.setVisible(False)
+        self.tableWidget_SettlementDisplay.action_insertcol.setVisible(False)
+        self.tableWidget_SettlementDisplay.action_insertrow.setVisible(False)
+
+        # 右键菜单设置
+        self.tableWidget_SettlementDisplay.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.propertyWin.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableWidget_SettlementDisplay.setContextMenuPolicy(Qt.CustomContextMenu)
+
         self.dockWidget_4.setFixedWidth(386)
         self.radioButtonOriData.setChecked(True)
+
+        # 菜单项图片设置
         self.action_datafromExcel.setIcon(QIcon("Images/导入数据.png"))
         self.action_outputGrayModelData.setIcon(QIcon("Images/导出数据.png"))
         self.action_newTable.setIcon(QIcon("Images/新建表格.png"))
 
+        self.connectSlotFunction()
+
+        # 工具栏设置
+        self.toolBar = QToolBar(self)
+        self.addToolBar(Qt.TopToolBarArea, self.toolBar)
+        self.toolBar.addAction(self.action_newTable)
+        self.toolBar.addAction(self.action_datafromExcel)
+        self.action_datafromExcel.setToolTip("从Excel文件导入数据")
+        self.toolBar.addAction(self.action_outputGrayModelData)
+        self.action_outputGrayModelData.setToolTip("灰色理论预测数据导出")
+
+        # 布局
+        self.customLayout()
+
+    def connectSlotFunction(self):
         self.action_exit.triggered.connect(self.deleteLater)
         self.action_newTable.triggered.connect(self.newTable)
         self.action_datafromExcel.triggered.connect(self.inputData)
@@ -41,14 +65,78 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.pushButton_draw.clicked.connect(self.drawOriginData)
         self.pushButton_reset.clicked.connect(self.ori_reset)
         self.pushButton_clearPicture.clicked.connect(self.ori_plot_win.plotItem.clear)
-        self.toolBar = QToolBar(self)
-        self.addToolBar(Qt.TopToolBarArea, self.toolBar)
+        self.tableWidget.Signal_CalculateSettlement.connect(self.calculateSettlement)
+        self.tableWidget_SettlementDisplay.action_drawFigure.disconnect()
+        self.tableWidget_SettlementDisplay.action_drawFigure.triggered.connect(self.drawSettlementFigure)
 
-        self.toolBar.addAction(self.action_newTable)
-        self.toolBar.addAction(self.action_datafromExcel)
-        self.toolBar.addAction(self.action_outputGrayModelData)
 
-        self.customLayout()
+    def drawSettlementFigure(self):
+        selections = self.tableWidget_SettlementDisplay.selectedRanges()
+        if len(selections) == 0:
+            return
+        self.predictPlotWin.addLegend(offset=(50, 50))
+        # self.ori_plot_win.plotItem.showGrid(x=True, y=True, alpha = 0.4)  # 设置绘图部件显示网格线
+        self.predictPlotWin.plotItem.clear()
+        labels = [self.tableWidget_SettlementDisplay.horizontalHeaderItem(i).text() for i in
+                  range(self.tableWidget_SettlementDisplay.columnCount())]
+        data = []
+        for selection in selections:
+            toprow = selection.topRow()
+            bottomrow = selection.bottomRow()
+            leftcolumn = selection.leftColumn()
+            rightcolumn = selection.rightColumn()
+            for col in range(leftcolumn, rightcolumn + 1, 1):
+                lst = []
+                for row in range(toprow, bottomrow + 1, 1):
+                    lst.append(float(self.tableWidget_SettlementDisplay.item(row, col).text()))
+                data.append((labels[col], lst))
+
+        for index in range(1, len(data)):
+            self.predictPlotWin.plotItem.plot(x=data[0][1], y=data[index][1],
+                                            pen=(randint(0, 255), randint(0, 255), randint(0, 255)),symbolBrush=(randint(0, 255), randint(0, 255), randint(0, 255)), symbolPen='w', symbol='o', symbolSize=7)
+
+        self.predictPlotWin.setLabel('left', self.tableWidget_SettlementDisplay.horizontalHeaderItem(1).text())
+        self.predictPlotWin.setLabel('bottom', self.tableWidget_SettlementDisplay.horizontalHeaderItem(0).text())
+
+    def calculateSettlement(self):
+        selections = self.tableWidget.selectedRanges()
+        if len(selections) == 0:
+            return
+
+        if len(selections) >= 2:
+            QMessageBox.warning(self, "错误提示", "您不能对多重选择区域进行此操作")
+            return
+        selection = selections[0]
+        toprow = selection.topRow()
+        bottomrow = selection.bottomRow()
+        leftcolumn = selection.leftColumn()
+        rightcolumn = selection.rightColumn()
+        labels = [self.tableWidget.horizontalHeaderItem(i).text() for i in range(self.tableWidget.columnCount())]
+        datas = []
+
+        x_lst = []
+        for j in range(toprow, bottomrow + 1):
+            x_lst.append(self.tableWidget.item(j, leftcolumn).text())
+        x_lst = list(map(float, x_lst))
+
+        for i in range(leftcolumn+1, rightcolumn + 1):
+            lst = []
+            title = labels[i]
+            for j in range(toprow, bottomrow + 1):
+                lst.append(self.tableWidget.item(j, i).text())
+            lst = list(map(float, lst))
+            ret = abs(trapz(lst, x_lst, dx=0.01) / 1000)
+            datas.append((title, round(ret, 4)))
+
+        self.tableWidget_SettlementDisplay.setColumnCount(2)
+        self.tableWidget_SettlementDisplay.setRowCount(len(datas))
+        self.tableWidget_SettlementDisplay.setHorizontalHeaderLabels(['开采范围(cm)', '沉降值(mm)'])
+
+        for j in range(len(datas)):
+            self.tableWidget_SettlementDisplay.setItem(j ,0, QTableWidgetItem(str(datas[j][0])))
+            self.tableWidget_SettlementDisplay.setItem(j, 1, QTableWidgetItem(str(datas[j][1])))
+        self.dockWidget_3.raise_()
+
 
     def customLayout(self):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockWidget_4)
@@ -71,7 +159,6 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.lineEdit_verticalAxisUnits.clear()
         self.lineEdit_horizontalAxisUnits.clear()
         self.checkBox_reverseAxis.setChecked(True)
-
 
     def drawOriginData(self):
 
@@ -119,7 +206,6 @@ class MainWin(QMainWindow, Ui_MainWindow):
             for index in range(1, len(data)):
                 self.ori_plot_win.plotItem.plot(y=data[0][1], x=data[index][1], name=data[index][0],
                                                 pen=(randint(0, 255), randint(0, 255), randint(0, 255)))
-
         else:
             self.ori_plot_win.setLabel('left', y)
             self.ori_plot_win.setLabel('bottom', x)
@@ -203,3 +289,4 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.tableWidget.clear()
         self.tableWidget.setColumnCount(20)
         self.tableWidget.setRowCount(100)
+        self.tableWidget.setHorizontalHeaderLabels(["untitled"+str(i) for i in range(20)])
