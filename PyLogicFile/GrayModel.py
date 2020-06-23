@@ -1,5 +1,11 @@
 import numpy as np
-import pandas
+import pandas as pd
+
+import cgitb
+
+cgitb.enable(format="text")
+
+
 
 class GrayModel:
 
@@ -11,8 +17,8 @@ class GrayModel:
         self.GM()
 
         print(self.ordinaryGMPredict())
-
-
+        print(self.relativeResidualTest())
+        print(self.littleProbabilityTest())
 
     # 级比校验
     def ratio_check(self):
@@ -52,8 +58,6 @@ class GrayModel:
         else:
             return (self.train_data[0] - self.b / self.a) * np.exp(-self.a * k) + self.b / self.a
 
-
-
     def ordinaryGMPredict(self):
         ret = {}
         predict_lst = []
@@ -71,22 +75,41 @@ class GrayModel:
         ret['误差'] = [ret['预测值'][i] - ret['实际值'][i] for i in range(length)]
         ret['相对误差(%)'] = [abs(ret['预测值'][i] - ret['实际值'][i]) / ret['实际值'][i] * 100 for i in range(length)]
 
-        lst =[]
-        for k,v in ret.items():
+        lst = []
+        for k, v in ret.items():
             tmp = dict()
             tmp[k] = v
-            lst.append(pandas.DataFrame(tmp))
-        df = pandas.concat(lst, axis=1)
+            lst.append(pd.DataFrame(tmp))
+        df = pd.concat(lst, axis=1)
         df = df.fillna("")
+        return df
 
-        result = {}
-        result["数据"] = df
-        result['精度检验等级'] = {
-            '相对误差检验':'一级',
-            '小概率检验':'一级',
-            '后验差检验':'一级'
-        }
-        return result
+    def getAccuracyDescription(self):
+
+        # 相对残差精度
+        pass
+
+
+
+    # 相对残差检验计算
+    def relativeResidualTest(self):
+        realDataList = self.train_data
+        self.predictDataList = []
+        for i in range(self.train_length):
+            self.predictDataList.append(self.grayFunc(i))
+        self.relative_err_lst: np.ndarray = np.abs(np.array(realDataList) - np.array(self.predictDataList)) / np.array(
+            realDataList)
+        return self.relative_err_lst.mean()
+
+    # 均方差比值计算
+    def squareErrorRatio(self):
+        s1 = self.train_data.std()
+        s2 = self.relative_err_lst.std()
+        return s1 / s2
+
+    # 小概率计算
+    def littleProbabilityTest(self):
+        return self.relative_err_lst[np.where(abs(self.relative_err_lst - self.relative_err_lst.mean()) < 0.6745 * self.train_data.std() )].shape[0] / self.relative_err_lst.shape[0]
 
 
 
