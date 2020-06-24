@@ -19,6 +19,7 @@ class GrayModel:
         print(self.ordinaryGMPredict())
         print(self.relativeResidualTest())
         print(self.littleProbabilityTest())
+        print(self.accuracyDescription)
 
     # 级比校验
     def ratio_check(self):
@@ -84,12 +85,48 @@ class GrayModel:
         df = df.fillna("")
         return df
 
-    def getAccuracyDescription(self):
 
-        # 相对残差精度
-        pass
+    @property
+    def accuracyDescription(self):
+        # 1. 相对残差检验
+        ret = {}
+        relative_err_test_result = self.relativeResidualTest()
+        if relative_err_test_result <= 0.01:
+            ret['相对残差检验'] = (round(relative_err_test_result, 4), '一级')
+        elif 0.01 < relative_err_test_result <= 0.05:
+            ret['相对残差检验'] = (round(relative_err_test_result, 4), '二级')
+        elif 0.05 < relative_err_test_result <= 0.1:
+            ret['相对残差检验'] = (round(relative_err_test_result, 4), '三级')
+        elif 0.1 < relative_err_test_result <= 0.2:
+            ret['相对残差检验'] = (round(relative_err_test_result, 4), '四级')
+        else:
+            ret['相对残差检验'] = (round(relative_err_test_result, 4), '未通过')
+        # 2. 均方差比值检验
+        std_ratio_err = self.squareErrorRatio()
+        if std_ratio_err <= 0.35:
+            ret['均方差比值检验'] = (round(std_ratio_err, 4), '一级')
+        elif 0.35 < std_ratio_err <=0.5:
+            ret['均方差比值检验'] = (round(std_ratio_err, 4), '二级')
+        elif 0.5< std_ratio_err <= 0.65:
+            ret['均方差比值检验'] = (round(std_ratio_err, 4), '三级')
+        elif 0.65 < std_ratio_err <= 0.8:
+            ret['均方差比值检验'] = (round(std_ratio_err, 4), '四级')
+        else:
+            ret['均方差比值检验'] = (round(std_ratio_err, 4), '未通过')
 
-
+        # 3. 小误差概率检验
+        little_err_probility = self.littleProbabilityTest()
+        if little_err_probility >= 0.95:
+            ret['小误差概率检验'] = (round(little_err_probility, 4), '一级')
+        elif 0.8 <= little_err_probility < 0.95 :
+            ret['小误差概率检验'] = (round(little_err_probility, 4), '二级')
+        elif 0.7 <= little_err_probility < 0.8:
+            ret['小误差概率检验'] = (round(little_err_probility, 4), '三级')
+        elif 0.6 <= little_err_probility < 0.7:
+            ret['小误差概率检验'] = (round(little_err_probility, 4), '四级')
+        else:
+            ret['小误差概率检验'] = (round(little_err_probility, 4), '未通过')
+        return ret
 
     # 相对残差检验计算
     def relativeResidualTest(self):
@@ -105,7 +142,7 @@ class GrayModel:
     def squareErrorRatio(self):
         s1 = self.train_data.std()
         s2 = self.relative_err_lst.std()
-        return s1 / s2
+        return s2 / s1
 
     # 小概率计算
     def littleProbabilityTest(self):
