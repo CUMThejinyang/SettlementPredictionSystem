@@ -3,12 +3,47 @@ from PyUiFile.mainform import Ui_MainWindow
 import pandas as pd
 import pyqtgraph as pg
 from random import randint
-from numpy import trapz
+from numpy import trapz, array
+from PyLogicFile.GrayModel import GrayModel
 import cgitb
+from typing import *
+from prettytable import PrettyTable
+from numba import jit
+
 
 cgitb.enable(format="text")
 
 pg.setConfigOptions(antialias=True)
+s = """
+<style type="text/css">
+table.gridtable {
+	font-family: verdana,arial,sans-serif;
+	font-size:11px;
+	color:#333333;
+	border-width: 1px;
+	border-color: #666666;
+	border-collapse: collapse;
+
+}
+table.gridtable th {
+	border-width: 1px;
+	padding: 8px;
+	border-style: solid;
+	border-color: #666666;
+	background-color: #dedede;
+}
+table.gridtable td {
+	border-width: 1px;
+	padding: 8px;
+	border-style: solid;
+	border-color: #666666;
+	background-color: #ffffff;
+    text-align: center;
+}
+</style>
+<body>
+<table class="gridtable">
+"""
 
 
 class MainWin(QMainWindow, Ui_MainWindow):
@@ -55,6 +90,8 @@ class MainWin(QMainWindow, Ui_MainWindow):
 
         # 布局
         self.customLayout()
+        self.test()
+
 
     def connectSlotFunction(self):
         self.action_exit.triggered.connect(self.deleteLater)
@@ -68,7 +105,7 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.tableWidget.Signal_CalculateSettlement.connect(self.calculateSettlement)
         self.tableWidget_SettlementDisplay.action_drawFigure.disconnect()
         self.tableWidget_SettlementDisplay.action_drawFigure.triggered.connect(self.drawSettlementFigure)
-
+        self.action_RunGrayTheory.triggered.connect(self.getGrayPredictionResult)
 
     def drawSettlementFigure(self):
         selections = self.tableWidget_SettlementDisplay.selectedRanges()
@@ -93,7 +130,9 @@ class MainWin(QMainWindow, Ui_MainWindow):
 
         for index in range(1, len(data)):
             self.predictPlotWin.plotItem.plot(x=data[0][1], y=data[index][1],
-                                            pen=(randint(0, 255), randint(0, 255), randint(0, 255)),symbolBrush=(randint(0, 255), randint(0, 255), randint(0, 255)), symbolPen='w', symbol='o', symbolSize=7)
+                                              pen=(randint(0, 255), randint(0, 255), randint(0, 255)),
+                                              symbolBrush=(randint(0, 255), randint(0, 255), randint(0, 255)),
+                                              symbolPen='w', symbol='o', symbolSize=7)
 
         self.predictPlotWin.setLabel('left', self.tableWidget_SettlementDisplay.horizontalHeaderItem(1).text())
         self.predictPlotWin.setLabel('bottom', self.tableWidget_SettlementDisplay.horizontalHeaderItem(0).text())
@@ -119,7 +158,7 @@ class MainWin(QMainWindow, Ui_MainWindow):
             x_lst.append(self.tableWidget.item(j, leftcolumn).text())
         x_lst = list(map(float, x_lst))
 
-        for i in range(leftcolumn+1, rightcolumn + 1):
+        for i in range(leftcolumn + 1, rightcolumn + 1):
             lst = []
             title = labels[i]
             for j in range(toprow, bottomrow + 1):
@@ -133,10 +172,9 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.tableWidget_SettlementDisplay.setHorizontalHeaderLabels(['开采范围(cm)', '沉降值(mm)'])
 
         for j in range(len(datas)):
-            self.tableWidget_SettlementDisplay.setItem(j ,0, QTableWidgetItem(str(datas[j][0])))
+            self.tableWidget_SettlementDisplay.setItem(j, 0, QTableWidgetItem(str(datas[j][0])))
             self.tableWidget_SettlementDisplay.setItem(j, 1, QTableWidgetItem(str(datas[j][1])))
         self.dockWidget_3.raise_()
-
 
     def customLayout(self):
         self.addDockWidget(Qt.RightDockWidgetArea, self.dockWidget_4)
@@ -146,7 +184,6 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.dockWidget_3.setAllowedAreas(Qt.LeftDockWidgetArea)
         self.tabifyDockWidget(self.dockWidget, self.dockWidget_2)
         self.tabifyDockWidget(self.dockWidget, self.dockWidget_3)
-        # self.setTabPosition(Qt.LeftDockWidgetArea, QTabWidget.West)
         self.dockWidget.raise_()
         self.splitter_2.setStretchFactor(0, 3.5)
         self.splitter_2.setStretchFactor(1, 6.5)
@@ -289,4 +326,149 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.tableWidget.clear()
         self.tableWidget.setColumnCount(20)
         self.tableWidget.setRowCount(100)
-        self.tableWidget.setHorizontalHeaderLabels(["untitled"+str(i) for i in range(20)])
+        self.tableWidget.setHorizontalHeaderLabels(["untitled" + str(i) for i in range(20)])
+
+    def getGrayPredictionResult(self):
+        # 1. 获取预测参数
+        train_data_length = self.SpinBoxTrainCount.value()
+        predict_length = self.SpinBoxPredictCount.value()
+        if predict_length == 0:
+            self.outputToUser('预测次数为0', 1)
+            return
+            # 2. 获取数据
+        selections = self.tableWidget_SettlementDisplay.selectedRanges()
+        if len(selections) == 0:
+            self.outputToUser('您没有选择任何数据, 请重新选择后再试', 1)
+            return
+
+        if len(selections) >= 2:
+            QMessageBox.critical(self, "出现错误", "您不能对多重区域进行此操作", QMessageBox.Yes)
+            return
+
+        data = []
+        selection = selections[0]
+        toprow = selection.topRow()
+        bottomrow = selection.bottomRow()
+        leftcolumn = selection.leftColumn()
+        rightcolumn = selection.rightColumn()
+        for col in range(leftcolumn, rightcolumn + 1, 1):
+            lst = []
+            for row in range(toprow, bottomrow + 1, 1):
+                try:
+                    lst.append(float(self.tableWidget_SettlementDisplay.item(row, col).text()))
+                except Exception:
+                    break
+            data.append(lst)
+
+        if len(data) == 1:
+            predict_data = data[0]
+        elif len(data) == 2:
+            predict_discription = data[0]
+            predict_data = data[1]
+        else:
+            self.outputToUser('预测数据选择错误, 请重新选择', 1)
+            return
+
+        if train_data_length < 3:
+            self.outputToUser('模型训练集数据至少三个, 您的输入有误, 已经使用默认值3', 2)
+            self.SpinBoxTrainCount.setValue(3)
+            train_data_length = 3
+
+        # 建模
+        graymodel = GrayModel(array(predict_data[:train_data_length]),
+                              array(predict_data[train_data_length:train_data_length + predict_length]), predict_length)
+        if self.checkBox_CommonGrayModel.isChecked():
+            ret = graymodel.ordinaryGMPredict()
+            content: str = self.DataFrameToHtml(ret)
+            self.textBrowser.append(content)
+
+
+    @staticmethod
+    def DataFrameToPrettyTable(df: pd.DataFrame):
+        columns = df.columns
+        tb = PrettyTable()
+        for title in columns:
+            tb.add_column(title, df[title].tolist(), valign='m')
+        return tb
+
+    def outputToUser(self, text: str, level: int = 4, bold: bool = True):
+        """
+        :param text: 输出的内容
+        :param level:
+        `1`: red
+        `2`: blue
+        `3`: green
+        `4` : black
+        :return:
+        """
+        if level == 4:
+            color = 'black'
+        elif level == 3:
+            color = 'green'
+        elif level == 2:
+            color = 'blue'
+        elif level == 1:
+            color = 'red'
+        else:
+            color = 'black'
+        if bold:
+            s = f'<font color={color} size="3"><b>{text}</b></font>'
+        else:
+            s = f'<font color={color} size="3">{text}</font>'
+        self.textBrowser.append(s)
+
+
+
+    def test(self):
+        self.tableWidget_SettlementDisplay.setRowCount(10)
+        self.tableWidget_SettlementDisplay.setColumnCount(2)
+        self.tableWidget_SettlementDisplay.setItem(0, 0, QTableWidgetItem(str(30 )))
+        self.tableWidget_SettlementDisplay.setItem(1, 0, QTableWidgetItem(str(40 )))
+        self.tableWidget_SettlementDisplay.setItem(2, 0, QTableWidgetItem(str(50 )))
+        self.tableWidget_SettlementDisplay.setItem(3, 0, QTableWidgetItem(str(60 )))
+        self.tableWidget_SettlementDisplay.setItem(4, 0, QTableWidgetItem(str(70 )))
+        self.tableWidget_SettlementDisplay.setItem(5, 0, QTableWidgetItem(str(80 )))
+        self.tableWidget_SettlementDisplay.setItem(6, 0, QTableWidgetItem(str(90 )))
+        self.tableWidget_SettlementDisplay.setItem(7, 0, QTableWidgetItem(str(100)))
+        self.tableWidget_SettlementDisplay.setItem(8, 0, QTableWidgetItem(str(110)))
+        self.tableWidget_SettlementDisplay.setItem(9, 0, QTableWidgetItem(str(120)))
+        
+        self.tableWidget_SettlementDisplay.setItem(0, 1, QTableWidgetItem(str(1.6053)))
+        self.tableWidget_SettlementDisplay.setItem(1, 1, QTableWidgetItem(str(2.776)))
+        self.tableWidget_SettlementDisplay.setItem(2, 1, QTableWidgetItem(str(3.9751)))
+        self.tableWidget_SettlementDisplay.setItem(3, 1, QTableWidgetItem(str(4.4792)))
+        self.tableWidget_SettlementDisplay.setItem(4, 1, QTableWidgetItem(str(5.5745)))
+        self.tableWidget_SettlementDisplay.setItem(5, 1, QTableWidgetItem(str(7.1783)))
+        self.tableWidget_SettlementDisplay.setItem(6, 1, QTableWidgetItem(str(8.889)))
+        self.tableWidget_SettlementDisplay.setItem(7, 1, QTableWidgetItem(str(10.9843)))
+        self.tableWidget_SettlementDisplay.setItem(8, 1, QTableWidgetItem(str(12.7529)))
+        self.tableWidget_SettlementDisplay.setItem(9, 1, QTableWidgetItem(str(13.1359)))
+        self.SpinBoxPredictCount.setValue(4)
+        self.SpinBoxTrainCount.setValue(6)
+        self.checkBox_CommonGrayModel.setChecked(True)
+
+
+
+    @staticmethod
+
+    def DataFrameToHtml(df:pd.DataFrame):
+        content = """"""
+        columns = df.columns
+        content += "<tr>"
+        for title in columns:
+            content+="<th>{}</th>".format(title)
+        content += "</tr>"
+        for i in range(len(df.index)):
+            content += "<tr>"
+            for j in range(len(columns)):
+                content += '<td>{}</td>'.format(df.iloc[i, j])
+            content += "</tr>"
+        content+="</table></body>"
+
+        return s+content
+
+
+
+
+
+
