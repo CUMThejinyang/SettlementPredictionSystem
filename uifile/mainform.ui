@@ -378,7 +378,7 @@
         </property>
         <layout class="QGridLayout" name="gridLayout_13">
          <item row="0" column="0">
-          <widget class="QTextBrowser" name="textBrowser"/>
+          <widget class="CustomTextBrowser" name="textBrowser"/>
          </item>
         </layout>
        </widget>
@@ -1035,13 +1035,18 @@
   <customwidget>
    <class>ExtendedTableWidget</class>
    <extends>QTableWidget</extends>
-   <header location="global">PyLogicFile.ExtendedTableWidget</header>
+   <header location="global">PyLogicFile.ExtendedWidget</header>
   </customwidget>
   <customwidget>
    <class>PlotWidget</class>
    <extends>QWidget</extends>
    <header>pyqtgraph.widgets.PlotWidget</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CustomTextBrowser</class>
+   <extends>QTextBrowser</extends>
+   <header>PyLogicFile.ExtendedWidget</header>
   </customwidget>
  </customwidgets>
  <resources/>

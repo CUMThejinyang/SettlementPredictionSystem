@@ -10,7 +10,6 @@ from typing import *
 from prettytable import PrettyTable
 from numba import jit
 
-
 cgitb.enable(format="text")
 
 pg.setConfigOptions(antialias=True)
@@ -18,7 +17,7 @@ s = """
 <style type="text/css">
 table.gridtable {
 	font-family: verdana,arial,sans-serif;
-	font-size:11px;
+	font-size:13px;
 	color:#333333;
 	border-width: 1px;
 	border-color: #666666;
@@ -68,6 +67,8 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.tableWidget_SettlementDisplay.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.propertyWin.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.textBrowser.setContextMenuPolicy(Qt.CustomContextMenu)
+
 
         self.dockWidget_4.setFixedWidth(386)
         self.radioButtonOriData.setChecked(True)
@@ -90,8 +91,20 @@ class MainWin(QMainWindow, Ui_MainWindow):
 
         # 布局
         self.customLayout()
+
+        # 基础设置
+        self.action_clear_output = QAction( "clear", self.textBrowser)
+        self.action_clear_output.triggered.connect(self.clearOutput)
+        self.textBrowser.addAction(self.action_clear_output)
+
+
+
+
+        # 测试
         self.test()
 
+    def clearOutput(self):
+        self.textBrowser.clear()
 
     def connectSlotFunction(self):
         self.action_exit.triggered.connect(self.deleteLater)
@@ -374,13 +387,58 @@ class MainWin(QMainWindow, Ui_MainWindow):
             self.SpinBoxTrainCount.setValue(3)
             train_data_length = 3
 
+
+        if not any([self.checkBox_CommonGrayModel.isChecked(), self.checkBox_SupplementModel.isChecked(), self.checkBox_MetabolismModel.isChecked()]):
+            self.outputToUser('您还未选择灰色理论预测模型, 请选择后再试!', 1)
+            return
         # 建模
         graymodel = GrayModel(array(predict_data[:train_data_length]),
-                              array(predict_data[train_data_length:train_data_length + predict_length]), predict_length)
+                              array(predict_data[train_data_length:train_data_length + predict_length]),
+                              predict_length)
+        self.outputToUser(
+            f'本次预测使用的训练集数据为{predict_data[:train_data_length]};<br> 测试集数据为{predict_data[train_data_length:train_data_length + predict_length]};<br> 预测次数为{predict_length}:',
+            level=4)
+        labels = [self.tableWidget_SettlementDisplay.horizontalHeaderItem(i).text() for i in range(self.tableWidget_SettlementDisplay.columnCount())]
+
         if self.checkBox_CommonGrayModel.isChecked():
             ret = graymodel.ordinaryGMPredict()
-            content: str = self.DataFrameToHtml(ret)
+
+
+
+
+            content: str = self.DataFrameToHtml(ret, graymodel.train_length)
+            self.outputToUser('采用普通GM(1,1)模型预测结果如下:', level=2)
             self.textBrowser.append(content)
+        if self.checkBox_SupplementModel.isChecked():
+            ret = graymodel.getGrayNumberFillModelResult()
+            content: str = self.DataFrameToHtml(ret, -1)
+            self.outputToUser('采用灰数递补模型预测结果如下:', level=2)
+            self.textBrowser.append(content)
+        if self.checkBox_MetabolismModel.isChecked():
+            if predict_length > len(predict_data) - train_data_length:
+                self.outputToUser('您选择了新陈代谢模型, 该模型需要实测得数据进行迭代计算, 您提供的数据不足, 无法计算!', level=1)
+            else:
+                ret = graymodel.getMetabolicModelResult()
+                content: str = self.DataFrameToHtml(ret, -1)
+                self.outputToUser('采用新陈代谢模型预测结果如下:', level=2)
+                self.textBrowser.append(content)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     @staticmethod
@@ -417,22 +475,21 @@ class MainWin(QMainWindow, Ui_MainWindow):
             s = f'<font color={color} size="3">{text}</font>'
         self.textBrowser.append(s)
 
-
-
     def test(self):
         self.tableWidget_SettlementDisplay.setRowCount(10)
         self.tableWidget_SettlementDisplay.setColumnCount(2)
-        self.tableWidget_SettlementDisplay.setItem(0, 0, QTableWidgetItem(str(30 )))
-        self.tableWidget_SettlementDisplay.setItem(1, 0, QTableWidgetItem(str(40 )))
-        self.tableWidget_SettlementDisplay.setItem(2, 0, QTableWidgetItem(str(50 )))
-        self.tableWidget_SettlementDisplay.setItem(3, 0, QTableWidgetItem(str(60 )))
-        self.tableWidget_SettlementDisplay.setItem(4, 0, QTableWidgetItem(str(70 )))
-        self.tableWidget_SettlementDisplay.setItem(5, 0, QTableWidgetItem(str(80 )))
-        self.tableWidget_SettlementDisplay.setItem(6, 0, QTableWidgetItem(str(90 )))
+        self.tableWidget_SettlementDisplay.setHorizontalHeaderLabels(['开挖范围', '沉降值'])
+        self.tableWidget_SettlementDisplay.setItem(0, 0, QTableWidgetItem(str(30)))
+        self.tableWidget_SettlementDisplay.setItem(1, 0, QTableWidgetItem(str(40)))
+        self.tableWidget_SettlementDisplay.setItem(2, 0, QTableWidgetItem(str(50)))
+        self.tableWidget_SettlementDisplay.setItem(3, 0, QTableWidgetItem(str(60)))
+        self.tableWidget_SettlementDisplay.setItem(4, 0, QTableWidgetItem(str(70)))
+        self.tableWidget_SettlementDisplay.setItem(5, 0, QTableWidgetItem(str(80)))
+        self.tableWidget_SettlementDisplay.setItem(6, 0, QTableWidgetItem(str(90)))
         self.tableWidget_SettlementDisplay.setItem(7, 0, QTableWidgetItem(str(100)))
         self.tableWidget_SettlementDisplay.setItem(8, 0, QTableWidgetItem(str(110)))
         self.tableWidget_SettlementDisplay.setItem(9, 0, QTableWidgetItem(str(120)))
-        
+
         self.tableWidget_SettlementDisplay.setItem(0, 1, QTableWidgetItem(str(1.6053)))
         self.tableWidget_SettlementDisplay.setItem(1, 1, QTableWidgetItem(str(2.776)))
         self.tableWidget_SettlementDisplay.setItem(2, 1, QTableWidgetItem(str(3.9751)))
@@ -443,32 +500,34 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.tableWidget_SettlementDisplay.setItem(7, 1, QTableWidgetItem(str(10.9843)))
         self.tableWidget_SettlementDisplay.setItem(8, 1, QTableWidgetItem(str(12.7529)))
         self.tableWidget_SettlementDisplay.setItem(9, 1, QTableWidgetItem(str(13.1359)))
-        self.SpinBoxPredictCount.setValue(4)
+        self.SpinBoxPredictCount.setValue(5)
         self.SpinBoxTrainCount.setValue(6)
         self.checkBox_CommonGrayModel.setChecked(True)
 
-
-
     @staticmethod
-
-    def DataFrameToHtml(df:pd.DataFrame):
+    def DataFrameToHtml(df: pd.DataFrame, fit_num: int):
         content = """"""
         columns = df.columns
         content += "<tr>"
         for title in columns:
-            content+="<th>{}</th>".format(title)
+            content += "<th>{}</th>".format(title)
         content += "</tr>"
+        cnt = 0
         for i in range(len(df.index)):
             content += "<tr>"
             for j in range(len(columns)):
-                content += '<td>{}</td>'.format(df.iloc[i, j])
+                if cnt < fit_num:
+                    content += '<td><b>{}</b></td>'.format(df.iloc[i, j])
+                else:
+                    if isinstance(df.loc[i, '相对误差(%)'], str):
+                        content += '<td><b><i><font color="#aaa6ad">{}</font></i></b></td>'.format(df.iloc[i, j])
+                    else:
+                        if round(df.loc[i, '相对误差(%)'], 3) > 20:
+                            content += '<td><font color="red"><b>{}</b></font></td>'.format(df.iloc[i, j])
+                        else:
+                            content += '<td><font color="green"><b>{}</b></font></td>'.format(df.iloc[i, j])
+
+            cnt += 1
             content += "</tr>"
-        content+="</table></body>"
-
-        return s+content
-
-
-
-
-
-
+        content += "</table></body>"
+        return s + content

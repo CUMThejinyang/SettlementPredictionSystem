@@ -188,7 +188,7 @@ class Ui_MainWindow(object):
         self.groupBox_5.setObjectName("groupBox_5")
         self.gridLayout_13 = QtWidgets.QGridLayout(self.groupBox_5)
         self.gridLayout_13.setObjectName("gridLayout_13")
-        self.textBrowser = QtWidgets.QTextBrowser(self.groupBox_5)
+        self.textBrowser = CustomTextBrowser(self.groupBox_5)
         self.textBrowser.setObjectName("textBrowser")
         self.gridLayout_13.addWidget(self.textBrowser, 0, 0, 1, 1)
         self.gridLayout_2.addWidget(self.splitter_3, 0, 0, 1, 1)
@@ -645,5 +645,5 @@ class Ui_MainWindow(object):
         self.action_TheoryCalculationPrediction.setText(_translate("MainWindow", "理论计算预测"))
         self.action_CustomParameterFit.setText(_translate("MainWindow", "自定义参数预测"))
         self.action_CalculateSettlement.setText(_translate("MainWindow", "沉降值计算"))
-from PyLogicFile.ExtendedTableWidget import ExtendedTableWidget
+from PyLogicFile.ExtendedWidget import CustomTextBrowser, ExtendedTableWidget
 from pyqtgraph.widgets.PlotWidget import PlotWidget

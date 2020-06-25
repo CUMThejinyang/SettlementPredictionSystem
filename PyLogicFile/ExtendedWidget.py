@@ -1,7 +1,7 @@
 # --coding: utf8--
 # @Time  : 2020/6/12 13:09
 # @author: hejinyang
-# @File  : ExtendedTableWidget.py
+# @File  : ExtendedWidget.py
 
 from PyQt5.Qt import *
 from PyUiFile.rowdialog import Ui_rowDialog
@@ -374,6 +374,27 @@ class ExtendedTableWidget(QTableWidget):
     def showPopMenu(self):
         self.popmenu.exec_(QCursor.pos())
 
+
+class CustomTextBrowser(QTextBrowser):
+
+    def __init__(self, parent=None):
+        super(CustomTextBrowser, self).__init__(parent)
+        self.popmenu = QMenu(self)
+
+        self.action_selectAll = QAction("全选", self)
+        self.action_selectAll.triggered.connect(self.selectAll)
+
+        self.action_clear = QAction("清空", self)
+        self.action_clear.triggered.connect(self.clear)
+
+        self.popmenu.addAction(self.action_selectAll)
+        self.popmenu.addAction(self.action_clear)
+
+        # self.customContextMenuRequested.disconnect()
+        self.customContextMenuRequested.connect(self.showPopMenu)
+
+    def showPopMenu(self):
+        self.popmenu.exec_(QCursor.pos())
 
 
 

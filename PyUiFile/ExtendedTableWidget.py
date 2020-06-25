@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ExtendedTableWidget.py'
+# Form implementation generated from reading ui file 'ExtendedWidget.py'
 #
 # Created by: PyQt5 UI code generator 5.15.0
 #

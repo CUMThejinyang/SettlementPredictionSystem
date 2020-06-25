@@ -175,6 +175,8 @@ class GrayModel:
         df = pd.concat(df_lst, axis=1)
         df = df.fillna("")
         return df
+
+
     def ordinaryGMPredict(self):
         ret = {}
         predict_lst = []
