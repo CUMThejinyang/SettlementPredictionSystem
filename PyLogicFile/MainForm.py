@@ -57,18 +57,19 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.df_oriData: pd.DataFrame = None
         self.df_processData: pd.DataFrame = None
 
+        # 获取用户窗口分辨率
+        self.showMaximized()
         # 单独设置沉降值计算窗口
         # self.tableWidget_SettlementDisplay.action_drawFigure.setVisible(False)
         self.tableWidget_SettlementDisplay.action_CalculateSettlement.setVisible(False)
         self.tableWidget_SettlementDisplay.action_insertcol.setVisible(False)
-        self.tableWidget_SettlementDisplay.action_insertrow.setVisible(False)
+        # self.tableWidget_SettlementDisplay.action_insertrow.setVisible(False)
 
         # 右键菜单设置
         self.tableWidget_SettlementDisplay.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableWidget.propertyWin.tableWidget.setContextMenuPolicy(Qt.CustomContextMenu)
         self.textBrowser.setContextMenuPolicy(Qt.CustomContextMenu)
-
 
         self.dockWidget_4.setFixedWidth(386)
         self.radioButtonOriData.setChecked(True)
@@ -93,12 +94,9 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.customLayout()
 
         # 基础设置
-        self.action_clear_output = QAction( "clear", self.textBrowser)
+        self.action_clear_output = QAction("clear", self.textBrowser)
         self.action_clear_output.triggered.connect(self.clearOutput)
         self.textBrowser.addAction(self.action_clear_output)
-
-
-
 
         # 测试
         self.test()
@@ -178,7 +176,7 @@ class MainWin(QMainWindow, Ui_MainWindow):
                 lst.append(self.tableWidget.item(j, i).text())
             lst = list(map(float, lst))
             ret = abs(trapz(lst, x_lst, dx=0.01) / 1000)
-            datas.append((title, round(ret, 4)))
+            datas.append((title, round(ret, 3)))
 
         self.tableWidget_SettlementDisplay.setColumnCount(2)
         self.tableWidget_SettlementDisplay.setRowCount(len(datas))
@@ -373,10 +371,14 @@ class MainWin(QMainWindow, Ui_MainWindow):
                     break
             data.append(lst)
 
+        labels = [self.tableWidget_SettlementDisplay.horizontalHeaderItem(i).text() for i in
+                  range(self.tableWidget_SettlementDisplay.columnCount())]
+        df: pd.DataFrame = None
         if len(data) == 1:
             predict_data = data[0]
+            df = None
         elif len(data) == 2:
-            predict_discription = data[0]
+            df = pd.DataFrame({labels[0]: data[0]})
             predict_data = data[1]
         else:
             self.outputToUser('预测数据选择错误, 请重新选择', 1)
@@ -387,8 +389,8 @@ class MainWin(QMainWindow, Ui_MainWindow):
             self.SpinBoxTrainCount.setValue(3)
             train_data_length = 3
 
-
-        if not any([self.checkBox_CommonGrayModel.isChecked(), self.checkBox_SupplementModel.isChecked(), self.checkBox_MetabolismModel.isChecked()]):
+        if not any([self.checkBox_CommonGrayModel.isChecked(), self.checkBox_SupplementModel.isChecked(),
+                    self.checkBox_MetabolismModel.isChecked()]):
             self.outputToUser('您还未选择灰色理论预测模型, 请选择后再试!', 1)
             return
         # 建模
@@ -396,42 +398,92 @@ class MainWin(QMainWindow, Ui_MainWindow):
                               array(predict_data[train_data_length:train_data_length + predict_length]),
                               predict_length)
         self.outputToUser(
-            f'本次预测使用的训练集数据为{predict_data[:train_data_length]};<br> 测试集数据为{predict_data[train_data_length:train_data_length + predict_length]};<br> 预测次数为{predict_length}:',
+            f'本次预测使用的训练集数据为{predict_data[:train_data_length]}；<br> 测试集数据为{predict_data[train_data_length:train_data_length + predict_length]}；<br> 预测次数为{predict_length}；',
             level=4)
-        labels = [self.tableWidget_SettlementDisplay.horizontalHeaderItem(i).text() for i in range(self.tableWidget_SettlementDisplay.columnCount())]
+
+        # 绘实际值得散点图
+        self.predictPlotWin.addLegend(offset=(50, 50))
+        self.predictPlotWin.plotItem.clear()
+        labels = [self.tableWidget_SettlementDisplay.horizontalHeaderItem(i).text() for i in
+                  range(self.tableWidget_SettlementDisplay.columnCount())]
+        data = []
+        for col in range(leftcolumn, rightcolumn + 1, 1):
+            lst = []
+            for row in range(toprow, bottomrow + 1, 1):
+                try:
+                    lst.append(float(self.tableWidget_SettlementDisplay.item(row, col).text()))
+                except Exception:
+                    break
+            data.append((labels[col], lst))
+
+
+        self.predictPlotWin.plotItem.plot(x=data[0][1], y=data[1][1],
+                                          pen=None,
+                                          symbolBrush='b',
+                                          symbolPen='w', symbol='o', symbolSize=7)
+
+        self.predictPlotWin.setLabel('left', self.tableWidget_SettlementDisplay.horizontalHeaderItem(1).text())
+        self.predictPlotWin.setLabel('bottom', self.tableWidget_SettlementDisplay.horizontalHeaderItem(0).text())
+
 
         if self.checkBox_CommonGrayModel.isChecked():
             ret = graymodel.ordinaryGMPredict()
-
-
-
-
+            if df is not None:
+                ret = pd.concat([df, ret], axis=1)
+                ret = ret.fillna("")
             content: str = self.DataFrameToHtml(ret, graymodel.train_length)
             self.outputToUser('采用普通GM(1,1)模型预测结果如下:', level=2)
             self.textBrowser.append(content)
+
+            dct = {}
+            dct['模型参数'] = ('发展系数a', '灰色作用量b')
+            dct['计算结果'] = (round(graymodel.a, 4), round(graymodel.b, 4))
+            content = self.ParamDataFrameToHtml(pd.DataFrame(dct))
+            self.outputToUser('普通GM(1,1)模型求解参数如下:', level=2)
+            self.textBrowser.append(content)
+
+
+
+
+
+
+
+
         if self.checkBox_SupplementModel.isChecked():
             ret = graymodel.getGrayNumberFillModelResult()
-            content: str = self.DataFrameToHtml(ret, -1)
+            if df is not None:
+                # df = df[train_data_length:].reset_index(drop=True)
+                ret = pd.concat([df, ret], axis=1)
+                ret = ret.fillna("")
+            content: str = self.DataFrameToHtml(ret, graymodel.train_length)
             self.outputToUser('采用灰数递补模型预测结果如下:', level=2)
             self.textBrowser.append(content)
+
         if self.checkBox_MetabolismModel.isChecked():
             if predict_length > len(predict_data) - train_data_length:
                 self.outputToUser('您选择了新陈代谢模型, 该模型需要实测得数据进行迭代计算, 您提供的数据不足, 无法计算!', level=1)
             else:
                 ret = graymodel.getMetabolicModelResult()
-                content: str = self.DataFrameToHtml(ret, -1)
+                if df is not None:
+                    # df = df[train_data_length:].reset_index(drop=True)
+                    ret = pd.concat([df, ret], axis=1)
+                    ret = ret.fillna("")
+                content: str = self.DataFrameToHtml(ret, graymodel.train_length)
                 self.outputToUser('采用新陈代谢模型预测结果如下:', level=2)
                 self.textBrowser.append(content)
 
+        dct = {}
+        dct['项目'] = ['相对误差', '小误差概率', '均方差比值']
+        res = graymodel.getAccuracy()
+        dct['计算结果'] = [res.get('相对残差检验')[0], res.get('小误差概率检验')[0], res.get('均方差比值检验')[0]]
+        dct['精度'] = [res.get('相对残差检验')[1], res.get('小误差概率检验')[1], res.get('均方差比值检验')[1]]
+        accuracyDf = pd.DataFrame(dct)
+        self.outputToUser('模型训练精度如下:', level=2)
+        content = self.AccuracyDataFrameToHtml(accuracyDf)
+        self.textBrowser.append(content)
 
-
-
-
-
-
-
-
-
+        self.textBrowser.append(
+            '<b>以上预测结果中, 黑色表示模型训练的结果; <font size="3" color="green">绿色</font>表示计算误差合格的预测结果或模型训练精度合格; <font size="3" color="red">红色</font>表示计算误差不合格的预测结果或模型训练精度不合格; <font size="3" color="#aaa6ad"><i>灰色斜体</i></font>表示没有实际数据, 无法计算误差值! </b>')
 
 
 
@@ -476,6 +528,8 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.textBrowser.append(s)
 
     def test(self):
+        self.dockWidget_3.raise_()
+        self.checkBox_SupplementModel.setChecked(True)
         self.tableWidget_SettlementDisplay.setRowCount(10)
         self.tableWidget_SettlementDisplay.setColumnCount(2)
         self.tableWidget_SettlementDisplay.setHorizontalHeaderLabels(['开挖范围', '沉降值'])
@@ -526,8 +580,43 @@ class MainWin(QMainWindow, Ui_MainWindow):
                             content += '<td><font color="red"><b>{}</b></font></td>'.format(df.iloc[i, j])
                         else:
                             content += '<td><font color="green"><b>{}</b></font></td>'.format(df.iloc[i, j])
-
             cnt += 1
+            content += "</tr>"
+        content += "</table></body>"
+        return s + content
+
+    @staticmethod
+    def AccuracyDataFrameToHtml(df: pd.DataFrame):
+        content = """"""
+        columns = df.columns
+        content += "<tr>"
+        for title in columns:
+            content += "<th>{}</th>".format(title)
+        content += "</tr>"
+        for i in range(len(df.index)):
+            content += "<tr>"
+            for j in range(len(columns)):
+
+                if df.loc[i, '精度'] in ['一级', '二级', '三级']:
+                    content += '<td><font color="green"><b>{}</b></font></td>'.format(df.iloc[i, j])
+                else:
+                    content += '<td><font color="red"><b>{}</b></font></td>'.format(df.iloc[i, j])
+            content += "</tr>"
+        content += "</table></body>"
+        return s + content
+
+    @staticmethod
+    def ParamDataFrameToHtml(df: pd.DataFrame):
+        content = """"""
+        columns = df.columns
+        content += "<tr>"
+        for title in columns:
+            content += "<th>{}</th>".format(title)
+        content += "</tr>"
+        for i in range(len(df.index)):
+            content += "<tr>"
+            for j in range(len(columns)):
+                content += '<td><b>{}</b></td>'.format(df.iloc[i, j])
             content += "</tr>"
         content += "</table></body>"
         return s + content

@@ -14,7 +14,8 @@ class GrayModel:
         self.predict_cnt = predict_cnt
         self.train_length = len(self.train_data)
         self.GM()
-
+        self.__ret = self.ordinaryGMPredict()
+        self.__accuracy = self.__accuracyDescription
 
     # 级比校验
     def ratio_check(self):
@@ -55,47 +56,49 @@ class GrayModel:
             return (self.train_data[0] - self.b / self.a) * np.exp(-self.a * k) + self.b / self.a
 
 
+    def getAccuracy(self):
+        return self.__accuracy
 
     @property
-    def accuracyDescription(self):
+    def __accuracyDescription(self):
         # 1. 相对残差检验
         ret = {}
         relative_err_test_result = self.relativeResidualTest()
         if relative_err_test_result <= 0.01:
-            ret['相对残差检验'] = (round(relative_err_test_result, 4), '一级')
+            ret['相对残差检验'] = (round(relative_err_test_result, 3), '一级')
         elif 0.01 < relative_err_test_result <= 0.05:
-            ret['相对残差检验'] = (round(relative_err_test_result, 4), '二级')
+            ret['相对残差检验'] = (round(relative_err_test_result, 3), '二级')
         elif 0.05 < relative_err_test_result <= 0.1:
-            ret['相对残差检验'] = (round(relative_err_test_result, 4), '三级')
+            ret['相对残差检验'] = (round(relative_err_test_result, 3), '三级')
         elif 0.1 < relative_err_test_result <= 0.2:
-            ret['相对残差检验'] = (round(relative_err_test_result, 4), '四级')
+            ret['相对残差检验'] = (round(relative_err_test_result, 3), '四级')
         else:
-            ret['相对残差检验'] = (round(relative_err_test_result, 4), '未通过')
+            ret['相对残差检验'] = (round(relative_err_test_result, 3), '未通过')
         # 2. 均方差比值检验
         std_ratio_err = self.squareErrorRatio()
         if std_ratio_err <= 0.35:
-            ret['均方差比值检验'] = (round(std_ratio_err, 4), '一级')
+            ret['均方差比值检验'] = (round(std_ratio_err, 3), '一级')
         elif 0.35 < std_ratio_err <= 0.5:
-            ret['均方差比值检验'] = (round(std_ratio_err, 4), '二级')
+            ret['均方差比值检验'] = (round(std_ratio_err, 3), '二级')
         elif 0.5 < std_ratio_err <= 0.65:
-            ret['均方差比值检验'] = (round(std_ratio_err, 4), '三级')
+            ret['均方差比值检验'] = (round(std_ratio_err, 3), '三级')
         elif 0.65 < std_ratio_err <= 0.8:
-            ret['均方差比值检验'] = (round(std_ratio_err, 4), '四级')
+            ret['均方差比值检验'] = (round(std_ratio_err, 3), '四级')
         else:
-            ret['均方差比值检验'] = (round(std_ratio_err, 4), '未通过')
+            ret['均方差比值检验'] = (round(std_ratio_err, 3), '未通过')
 
         # 3. 小误差概率检验
         little_err_probility = self.littleProbabilityTest()
         if little_err_probility >= 0.95:
-            ret['小误差概率检验'] = (round(little_err_probility, 4), '一级')
+            ret['小误差概率检验'] = (round(little_err_probility, 3), '一级')
         elif 0.8 <= little_err_probility < 0.95:
-            ret['小误差概率检验'] = (round(little_err_probility, 4), '二级')
+            ret['小误差概率检验'] = (round(little_err_probility, 3), '二级')
         elif 0.7 <= little_err_probility < 0.8:
-            ret['小误差概率检验'] = (round(little_err_probility, 4), '三级')
+            ret['小误差概率检验'] = (round(little_err_probility, 3), '三级')
         elif 0.6 <= little_err_probility < 0.7:
-            ret['小误差概率检验'] = (round(little_err_probility, 4), '四级')
+            ret['小误差概率检验'] = (round(little_err_probility, 3), '四级')
         else:
-            ret['小误差概率检验'] = (round(little_err_probility, 4), '未通过')
+            ret['小误差概率检验'] = (round(little_err_probility, 3), '未通过')
         return ret
 
     # 相对残差检验计算
@@ -125,6 +128,8 @@ class GrayModel:
         self.train_data = self.train_data_copy
         usenum = len(self.train_data)
         predict_lst = []
+
+
         for i in range(self.predict_cnt):
             # 1. 计算参数
             self.GM()
@@ -133,12 +138,20 @@ class GrayModel:
             predict_lst.append(round(tmp, 4))
             self.train_data = np.append(self.train_data[1:], round(tmp, 4))
         ret = dict()
-        ret['实际值'] = self.test_data.tolist()
+
+
+
+        ret['实际值'] = self.test_data
         ret['预测值'] = predict_lst
+
         length = min(len(self.test_data), len(predict_lst))
         ret['误差'] = [round(predict_lst[i] - self.test_data[i], 4) for i in range(length)]
         ret['相对误差(%)'] = [round(abs((predict_lst[i] - self.test_data[i]) * 100 / self.test_data[i]), 4) for i in
                           range(length)]
+
+
+
+
         df_lst = []
         for k,v in ret.items():
             tmp = {}
@@ -146,6 +159,10 @@ class GrayModel:
             df_lst.append(pd.DataFrame(tmp))
         df = pd.concat(df_lst,axis=1)
         df = df.fillna("")
+
+        tmp_df = self.__ret.loc[:self.train_length-1, ['实际值', '预测值', '误差', '相对误差(%)']]
+        df = pd.concat([tmp_df, df]).reset_index(drop=True).fillna("")
+
         return df
 
 
@@ -161,7 +178,8 @@ class GrayModel:
             predict_lst.append(round(tmp, 4))
             self.train_data = np.append(self.train_data[1:], self.test_data[i])
         ret = dict()
-        ret['实际值'] = self.test_data.tolist()
+
+        ret['实际值'] = self.test_data
         ret['预测值'] = predict_lst
         length = min(len(self.test_data), len(predict_lst))
         ret['误差'] = [round(predict_lst[i] - self.test_data[i], 4) for i in range(length)]
@@ -174,6 +192,8 @@ class GrayModel:
             df_lst.append(pd.DataFrame(tmp))
         df = pd.concat(df_lst, axis=1)
         df = df.fillna("")
+        tmp_df = self.__ret.loc[:self.train_length - 1, ['实际值', '预测值', '误差', '相对误差(%)']]
+        df = pd.concat([tmp_df, df]).reset_index(drop=True).fillna("")
         return df
 
 
@@ -184,7 +204,6 @@ class GrayModel:
         for i in range(self.predict_cnt + self.train_length):
             predict_lst.append(self.grayFunc(i))
             caculate_lst.append(self.modelCalculateValue(i))
-
         ret['实际值'] = self.train_data.tolist()
         ret['实际值'].extend(self.test_data.tolist())
         ret['预测值'] = predict_lst
